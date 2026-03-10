@@ -36,16 +36,25 @@ echo ""
 echo "インストール先: $TARGET_DIR"
 echo ""
 
-# 既存ファイルの確認
+# 既存ファイルの確認（lightweight-sdd が作成するファイルのみ）
 EXISTING_FILES=()
-if [ -f "$TARGET_DIR/.cursorrules" ]; then
-    EXISTING_FILES+=(".cursorrules")
+if [ -f "$TARGET_DIR/.cursor/rules/lightweight-sdd.mdc" ]; then
+    EXISTING_FILES+=(".cursor/rules/lightweight-sdd.mdc")
 fi
-if [ -d "$TARGET_DIR/.cursor/commands" ]; then
-    EXISTING_FILES+=(".cursor/commands/")
+if [ -f "$TARGET_DIR/.cursor/commands/spec.md" ]; then
+    EXISTING_FILES+=(".cursor/commands/spec.md")
+fi
+if [ -f "$TARGET_DIR/.cursor/commands/tasks.md" ]; then
+    EXISTING_FILES+=(".cursor/commands/tasks.md")
+fi
+if [ -f "$TARGET_DIR/.cursor/commands/implement.md" ]; then
+    EXISTING_FILES+=(".cursor/commands/implement.md")
 fi
 if [ -f "$TARGET_DIR/STEERING.md" ]; then
     EXISTING_FILES+=("STEERING.md")
+fi
+if [ -d "$TARGET_DIR/specs" ]; then
+    EXISTING_FILES+=("specs/")
 fi
 
 # 既存ファイルがある場合、バックアップの確認
@@ -67,9 +76,11 @@ if [ ${#EXISTING_FILES[@]} -gt 0 ]; then
     
     # バックアップ作成
     for file in "${EXISTING_FILES[@]}"; do
-        if [ -e "$TARGET_DIR/$file" ]; then
-            echo "  バックアップ: $file → ${file}${BACKUP_SUFFIX}"
-            mv "$TARGET_DIR/$file" "$TARGET_DIR/${file}${BACKUP_SUFFIX}"
+        # 末尾スラッシュを除去してパスを正規化
+        clean="${file%/}"
+        if [ -e "$TARGET_DIR/$clean" ]; then
+            echo "  バックアップ: $clean → ${clean}${BACKUP_SUFFIX}"
+            mv "$TARGET_DIR/$clean" "$TARGET_DIR/${clean}${BACKUP_SUFFIX}"
         fi
     done
     echo ""
@@ -79,18 +90,47 @@ fi
 echo -e "${GREEN}インストール中...${NC}"
 echo ""
 
-# .cursorrules のコピー
-echo "  [1/3] .cursorrules をコピー"
-cp "$SCRIPT_DIR/.cursorrules" "$TARGET_DIR/.cursorrules"
+# .cursor/rules/lightweight-sdd.mdc のコピー
+echo "  [1/4] .cursor/rules/lightweight-sdd.mdc を作成"
+mkdir -p "$TARGET_DIR/.cursor/rules"
+cp "$SCRIPT_DIR/.cursor/rules/lightweight-sdd.mdc" "$TARGET_DIR/.cursor/rules/lightweight-sdd.mdc"
 
 # .cursor/commands/ のコピー
-echo "  [2/3] .cursor/commands/ をコピー"
+echo "  [2/4] .cursor/commands/ をコピー"
 mkdir -p "$TARGET_DIR/.cursor/commands"
 cp "$SCRIPT_DIR/.cursor/commands/"*.md "$TARGET_DIR/.cursor/commands/"
 
 # STEERING.md のコピー（テンプレートから）
-echo "  [3/3] STEERING.md を作成（テンプレートから）"
+echo "  [3/4] STEERING.md を作成（テンプレートから）"
 cp "$SCRIPT_DIR/templates/STEERING.template.md" "$TARGET_DIR/STEERING.md"
+
+# specs/ ディレクトリの作成
+echo "  [4/4] specs/ ディレクトリを作成"
+mkdir -p "$TARGET_DIR/specs"
+touch "$TARGET_DIR/specs/.gitkeep"
+
+# .git/info/exclude にインストールしたファイルをピンポイントで追加
+if [ -d "$TARGET_DIR/.git" ]; then
+    EXCLUDE_FILE="$TARGET_DIR/.git/info/exclude"
+    EXCLUDE_MARKER="# lightweight-sdd"
+
+    mkdir -p "$TARGET_DIR/.git/info"
+    touch "$EXCLUDE_FILE"
+
+    if ! grep -q "$EXCLUDE_MARKER" "$EXCLUDE_FILE"; then
+        echo "" >> "$EXCLUDE_FILE"
+        echo "$EXCLUDE_MARKER" >> "$EXCLUDE_FILE"
+        echo ".cursor/rules/lightweight-sdd.mdc" >> "$EXCLUDE_FILE"
+        echo ".cursor/commands/spec.md" >> "$EXCLUDE_FILE"
+        echo ".cursor/commands/tasks.md" >> "$EXCLUDE_FILE"
+        echo ".cursor/commands/implement.md" >> "$EXCLUDE_FILE"
+        echo "STEERING.md" >> "$EXCLUDE_FILE"
+        echo "specs/" >> "$EXCLUDE_FILE"
+        echo "  .git/info/exclude に除外設定を追加しました"
+    else
+        echo "  .git/info/exclude は設定済みです（スキップ）"
+    fi
+fi
 
 echo ""
 echo -e "${GREEN}✓ インストール完了！${NC}"
@@ -101,11 +141,11 @@ echo "1. STEERING.md を編集してプロジェクト情報を記入"
 echo "2. Cursor で $TARGET_DIR を開く"
 echo "3. 自然な会話でアイデアを話す"
 echo "4. 必要に応じて以下のコマンドを使用:"
-echo "   - /spec     : 会話を仕様書に整理"
-echo "   - /tasks    : 仕様をタスクに分解"
-echo "   - /implement: 実装ガイドラインを確認"
+echo "   - /spec     : 会話を仕様書に整理 → specs/<YYYY-MM>-<slug>/spec.md を生成"
+echo "   - /tasks    : 仕様をタスクに分解 → spec.md の Tasks セクションに追記"
+echo "   - /implement: 実装ガイドラインを確認 → 完了後に spec.md を更新"
 echo ""
-echo -e "${YELLOW}カスタマイズ例:${NC}"
-echo "  - クラウド環境の場合: $SCRIPT_DIR/examples/.cursorrules.cloud-restrictions を参考"
-echo "  - 記入例: $SCRIPT_DIR/examples/STEERING.example.md を参考"
+echo -e "${YELLOW}カスタマイズ:${NC}"
+echo "  - .cursor/rules/lightweight-sdd.mdc: 不要なセクションは削除してください"
+echo "  - STEERING.md: プロジェクト情報を記入してください（コメントに記入例あり）"
 echo ""

@@ -54,29 +54,45 @@ Cursor AIとの会話で以下のコマンドを使います：
 
 ```
 your-project/
-├── .cursorrules              # Cursor AIの動作ルール
 ├── .cursor/
+│   ├── rules/
+│   │   └── lightweight-sdd.mdc  # Cursor AIの動作ルール
 │   └── commands/
-│       ├── spec.md           # /spec コマンド定義
-│       ├── tasks.md          # /tasks コマンド定義
-│       └── implement.md      # /implement コマンド定義
-└── STEERING.md               # プロジェクトの意思決定記録
+│       ├── spec.md              # /spec コマンド定義
+│       ├── tasks.md             # /tasks コマンド定義
+│       └── implement.md         # /implement コマンド定義
+├── STEERING.md                  # プロジェクトの意思決定記録
+└── specs/                       # Spec単位の作業記録
+    └── <YYYY-MM>-<slug>/
+        └── spec.md              # 仕様・タスク・実装メモ・チャット履歴
+```
+
+### spec.md の構成
+
+`/spec` を実行すると `specs/<YYYY-MM>-<slug>/spec.md` が生成されます。1ファイルに仕様からタスク・実装メモまでを集約することで、日を跨いだ作業でもコンテキストを失わずに進められます。
+
+```
+specs/2026-03-user-authentication/
+└── spec.md
+    ├── Status / 作成日 / 関連チャット
+    ├── Spec（仕様）
+    ├── Tasks（タスク一覧 + 進捗）
+    ├── Implementation Notes（実装メモ）
+    └── Chat History（関連チャットの履歴）
 ```
 
 ## 🎨 カスタマイズ
 
-### .cursorrules のカスタマイズ
+### Cursor ルールのカスタマイズ
 
-基本的な `.cursorrules` に加えて、プロジェクトの特性に応じたルールを追加できます：
-
-- **クラウド環境の場合**: `examples/.cursorrules.cloud-restrictions` を参考に、破壊的コマンドの実行制限を追加
-- **最小構成**: `examples/.cursorrules.minimal` を参考に、必要最小限のルールのみ適用
+`.cursor/rules/lightweight-sdd.mdc` として既存の `.cursorrules` に干渉せずインストールされます。
+Terraform / gcloud / AWS / Docker / Git などの破壊的コマンドの実行制限も含まれています。
+プロジェクトに応じて不要なセクションを削除してください。
 
 ### STEERING.md のカスタマイズ
 
-`templates/STEERING.template.md` をベースに、プロジェクトの意思決定を記録します。
-
-記入例は `examples/STEERING.example.md` を参照してください。
+`templates/STEERING.template.md` に記入例をコメントで記載しています。
+`<!-- 例: ... -->` を参考に、プロジェクト情報を記入してください。
 
 ## 📚 ドキュメント構成の推奨
 
@@ -86,7 +102,7 @@ Lightweight SDDでは、以下のドキュメント構成を推奨します：
 |---------|------|------|
 | `README.md` | プロジェクト紹介 | 外部向けの概要、セットアップ手順 |
 | `STEERING.md` | 意思決定の記録 | なぜこうなったか、選択の背景と理由 |
-| `BACKLOG.md` | 今後の計画 | やりたいこと、Phase計画、優先順位 |
+| `specs/<YYYY-MM>-<slug>/spec.md` | Spec単位の作業記録 | 仕様・タスク・実装メモ・チャット履歴 |
 
 ## 🤖 AIの振る舞い
 
@@ -107,7 +123,7 @@ Lightweight SDDでは、以下のドキュメント構成を推奨します：
 
 `.cursorrules` には、破壊的なコマンド（`terraform apply`, `git push`, `docker build`等）の実行前に、必ずユーザーに確認を取るルールが含まれています。
 
-詳細は `examples/.cursorrules.cloud-restrictions` を参照してください。
+破壊的コマンドの制限ルールは `.cursor/rules/lightweight-sdd.mdc` に含まれています。
 
 ## 💡 他のSDDスタイルとの違い
 
@@ -117,18 +133,6 @@ Lightweight SDDでは、以下のドキュメント構成を推奨します：
 | 自動化 | 最小限 | 複雑な自動化 |
 | コンテキスト管理 | STEERING.mdで蓄積 | なし or 複雑 |
 | 学習コスト | 低い | 高い |
-
-## 🛠️ 開発の背景
-
-このSDDスタイルは、[swing-trade-bot](https://github.com/your-username/swing-trade-bot) プロジェクトでの実践から生まれました。
-
-cc-sdd スタイルのSDDを使っていましたが、以下の課題がありました：
-
-- ワークフローが硬く、自動化されすぎて理解が浅くなる
-- コンテキストが肥大化しやすい
-- ユーザー主導で進められない
-
-そこで、**自然な会話 → 必要に応じて整理** というシンプルなフローを採用し、実用性を重視したスタイルを確立しました。
 
 ## 📄 ライセンス
 
@@ -140,5 +144,4 @@ Issue や Pull Request は大歓迎です！
 
 ## 🔗 リンク
 
-- [Examples](examples/) - 実例とカスタマイズ例
 - [Templates](templates/) - テンプレート集
